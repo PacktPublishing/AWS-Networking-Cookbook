@@ -1,0 +1,206 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+  "Description" : "Builds a VPC with Internet Gateway, 1 public and 1 private subnets and NAT Gateway.",
+
+  "Parameters" : {
+    
+	"VpcCidr": {
+      "Description": "Enter the whole VPC CIDR Block.",
+      "Type": "String",
+      "ConstraintDescription": "Supports subnet sizes of /16 to /22 only. Input must be a correct CIDR, such as: 10.0.0.0/16",
+      "AllowedPattern": "^((\\d)+.){3}(0)\\/(16|17|18|19|20|21|22)"
+    },
+	
+    "PublicSubnetCIDR": { 
+	  "Description": "Public Subnet CIDR.", 
+	  "Type": "String", 
+	  "AllowedPattern": "^(((\\d)+.){3}(0)\\/(18|19|20|21|22|23|24|25)|)"
+	},
+	
+	"PrivateSubnetCIDR": { 
+	  "Description": "Private Subnet CIDR.", 
+	  "Type": "String", 
+	  "AllowedPattern": "^(((\\d)+.){3}(0)\\/(18|19|20|21|22|23|24|25)|)" 
+	}
+  },
+  
+  "Conditions": {
+    "CreateSubnetA": { "Fn::And": [
+      { "Fn::Not" : [ { "Fn::Equals" : [ {"Ref" : "PublicSubnetCIDR"}, "" ] } ] },
+      { "Fn::Not" : [ { "Fn::Equals" : [ {"Ref" : "PrivateSubnetCIDR"}, "" ] } ] }
+    ]}
+  },
+
+  "Resources" : {
+
+    "VPC" : {
+      "Type" : "AWS::EC2::VPC",
+      "Properties" : {
+        "CidrBlock" : { "Ref" : "VpcCidr" },
+        "Tags" : [
+          {"Key" : "Name", "Value" : { "Ref" : "AWS::StackName"} },
+          {"Key" : "Network", "Value" : "Public" },
+		  {"Key" : "Environment", "Value" : "Dev" }
+        ]
+      }
+    },
+
+    "PublicSubnet" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "CidrBlock" : { "Ref" : "PublicSubnetCIDR" },
+        "AvailabilityZone" : { "Fn::Select": [ "0", {"Fn::GetAZs": {"Ref": "AWS::Region"}} ]},
+        "Tags" : [
+          {"Key" : "Name", "Value" : { "Ref" : "AWS::StackName"} },
+          {"Key" : "Network", "Value" : "Public" },
+		  {"Key" : "Environment", "Value" : "Dev" }
+        ]
+      }
+    },
+
+    "PrivateSubnet" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "CidrBlock" : { "Ref" : "PrivateSubnetCIDR" },
+        "AvailabilityZone" : { "Fn::Select": [ "1", {"Fn::GetAZs": {"Ref": "AWS::Region"}} ]},
+        "Tags" : [
+          {"Key" : "Name", "Value" : { "Ref" : "AWS::StackName"} },
+          {"Key" : "Network", "Value" : "Public" },
+		  {"Key" : "Environment", "Value" : "Dev" }
+        ]
+      }
+    },
+
+    "InternetGateway" : {
+      "Type" : "AWS::EC2::InternetGateway",
+      "Properties" : {
+        "Tags" : [
+          {"Key" : "Name", "Value" : { "Ref" : "AWS::StackName"} },
+          {"Key" : "Network", "Value" : "Public" }
+        ]
+      }
+    },
+
+    "VPCGatewayAttach" : {
+	  "DependsOn" : ["VPC", "InternetGateway"],
+      "Type" : "AWS::EC2::VPCGatewayAttachment",
+      "Properties" : {
+         "VpcId" : { "Ref" : "VPC" },
+         "InternetGatewayId" : { "Ref" : "InternetGateway" }
+      }
+    },
+
+    "PublicRouteTable" : {
+	  "DependsOn" : ["VPC"],
+      "Type" : "AWS::EC2::RouteTable",
+      "Properties" : {
+        "VpcId" : {"Ref" : "VPC"},
+        "Tags" : [
+          {"Key" : "Name", "Value" : { "Ref" : "AWS::StackName"} },
+          {"Key" : "Network", "Value" : "Public" }
+        ]
+      }
+    },
+	
+    "PublicRoute" : {
+	  "DependsOn" : ["PublicRouteTable", "InternetGateway"],
+      "Type" : "AWS::EC2::Route",
+      "Properties" : {
+        "RouteTableId" : { "Ref" : "PublicRouteTable" },
+        "DestinationCidrBlock" : "0.0.0.0/0",
+        "GatewayId" : { "Ref" : "InternetGateway" }
+      }
+    },
+
+    "PublicSubnetRouteTableAssociation" : {
+	  "DependsOn" : ["PublicSubnet", "PublicRouteTable"],
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "PublicSubnet" },
+        "RouteTableId" : { "Ref" : "PublicRouteTable" }
+      }
+    },
+
+    "PrivateRouteTable" : {
+      "DependsOn" : ["VPC"],
+      "Type" : "AWS::EC2::RouteTable",
+      "Properties" : {
+        "VpcId" : { "Ref" : "VPC" },
+        "Tags" : [
+          { "Key" : "Name", "Value" : { "Ref" : "AWS::StackName" } },
+          { "Key" : "Network", "Value" : "Private" }
+        ]
+      }
+    },
+
+    "PrivateSubnetRouteTableAssociation" : {
+      "DependsOn" : ["PrivateSubnet", "PrivateRouteTable"],
+      "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties" : {
+        "SubnetId" : { "Ref" : "PrivateSubnet" },
+        "RouteTableId" : { "Ref" : "PrivateRouteTable" }
+      }
+    },
+	
+	"NATGateway" : {
+	  "Type" : "AWS::EC2::NatGateway",
+	  "DependsOn": "VPCGatewayAttach",
+      "Properties" : {
+        "AllocationId" : { "Fn::GetAtt" : ["NATGatewayEIP", "AllocationId"]},
+        "SubnetId" : { "Ref" : "PublicSubnet"}
+      }
+    },
+	
+    "NATGatewayEIP" : {
+	  "Type" : "AWS::EC2::EIP",
+      "Properties" : {
+        "Domain" : "vpc"
+	  }
+    },	
+	
+	"NATRoute" : {
+      "Type" : "AWS::EC2::Route",
+      "Properties" : {
+        "RouteTableId" : { "Ref" : "PrivateRouteTable" },
+        "DestinationCidrBlock" : "0.0.0.0/0",
+        "NatGatewayId" : { "Ref" : "NATGateway" }
+      }
+	}
+  },
+  
+  "Outputs" : {
+    "VpcId" : {
+      "Value" : {"Ref" : "VPC"},
+      "Description" : "VPC ID of newly created VPC"
+    },
+
+    "PublicSubnet" : {
+      "Value" : {"Ref" : "PublicSubnet"},
+      "Description" : "Public Subnet in AZ A"
+    },
+
+    "PrivateSubnet" : {
+      "Value" : {"Ref" : "PrivateSubnet"},
+      "Description" : "Public Subnet in AZ B"
+    },
+	
+	"InternetGateway" : {
+      "Value" : {"Ref" : "InternetGateway"},
+      "Description" : "Internet Gateway attached to the VPC"
+    },
+	
+	"NATGateway" : {
+      "Value" : {"Ref" : "NATGateway"},
+      "Description" : "NAT Gateway for Private Subnet"
+    },
+	
+	"ElasticIP" : {
+      "Value" : {"Ref" : "NATGatewayEIP"},
+      "Description" : "Elastic IP attached to the NAT"
+    }
+		
+  }
+
+}

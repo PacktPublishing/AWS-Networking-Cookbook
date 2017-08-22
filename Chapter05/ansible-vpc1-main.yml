@@ -1,0 +1,14 @@
+---
+ - name: VPC | Creating an AWS VPC inside mentioned Region
+   local_action: 
+     module: ec2_vpc
+     region: "{{ vpc_region }}"
+     state: present
+     cidr_block: "{{ vpc_cidr_block }}"
+     resource_tags: { "Name":"{{ vpc_name }}-vpc" }
+     subnets: "{{ vpc_subnets }}" 
+     internet_gateway: yes
+     route_tables: "{{ public_subnet_rt }}"
+   register: vpc
+   
+---

@@ -1,0 +1,39 @@
+---
+
+- name: Create VPC inside mention region
+  ec2_vpc:
+    state: present
+    cidr_block: "{{ vpc_cidr_block }}"
+    region: "{{ vpc_region }}"
+    resource_tags: { "Name":"{{ vpc_name }}-vpc" }
+    internet_gateway: yes
+  register: new_vpc
+
+- name: Create private subnet
+  ec2_vpc_subnet:
+    state: present
+    vpc_id: "{{ new_vpc.vpc_id }}"
+    az: "{{ public_az_1 }}"
+    cidr: "{{ public_cidr_1 }}" # Private Subnet-1
+    region: "{{ vpc_region }}"
+    resource_tags: { "Name":"{{ vpc_name }}-{{ public_az_1 }}-private-subnet" }
+    vpc_id: "{{ new_vpc.vpc_id }}"
+  register: private_subnet
+
+- name: Create new nat gateway using an EIP address
+  ec2_vpc_nat_gateway:
+    state: present
+    subnet_id: "{{ private_subnet.subnet.id }}"
+    wait: yes
+    region: "{{ vpc_region }}"
+    if_exist_do_not_create: true
+  register: vpc_nat_gateway
+
+- name: Modify private subnet
+  ec2_vpc_route_table:
+    vpc_id: '{{ new_vpc.vpc_id }}'
+    region: '{{ vpc_region }}'
+    subnets: "{{ private_subnet.subnet.id }}"
+    routes:
+      - dest: 0.0.0.0/0
+        gateway_id: "{{ vpc_nat_gateway.nat_gateway_id }}"

@@ -1,0 +1,37 @@
+---
+
+- name: Creating VPC inside mention region
+  ec2_vpc
+    state: present
+    cidr_block: "{{ vpc_cidr_block }}"
+    region: "{{ vpc_region }}"
+    resource_tags: { "Name":"{{ vpc_name }}-vpc" }
+    subnets:
+    - cidr: "{{ public_subnet_1_cidr }}"
+      az: "{{ vpc_region }}a"
+      resource_tags: { "Name":"{{ vpc_name }}-subnet" }
+    internet_gateway: yes
+  register: vpc
+  
+- name: Tag the Internet Gateway
+  ec2_tag:
+    resource: "{{ vpc.igw_id }}"
+    region: "{{ vpc_region }}"
+    state: present
+    tags:
+      Name: "{{ vpc_name }}-igw"
+  register: igw
+  
+- name: Set up Public Subnets Route Table
+  ec2_vpc_route_table:
+    vpc_id: "{{ vpc.vpc_id }}"
+    region: "{{ vpc_region }}"
+    state: present
+    tags:
+      Name: "{{ vpc_name }}-vpc-public-route-table"
+    subnets:
+      "{{ vpc.subnets | get_public_subnets_ids('Type','Public') }}"
+    routes:
+      - dest: 0.0.0.0/0
+        gateway_id: "{{ vpc.igw_id }}"
+  register: public_rt
