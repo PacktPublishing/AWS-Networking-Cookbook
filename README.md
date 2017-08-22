@@ -8,7 +8,7 @@ Finally, this book will teach you to troubleshoot your VPC's network, increasing
 ## Instructions and Navigation
 All of the code is organized into folders. Each folder starts with a number followed by the application name. For example, Chapter02.
 
-Chapters 01,02,03,04,06,07,08,and 09 doesn't contain code.
+Chapters 01, 02 ,03, 04, 06, 07, 08, and 09 doesn't contain code.
 
 The code will look like the following:
 ```
@@ -29,18 +29,21 @@ and require AWS console access. For this you need moderate network connectivity 
 internet. Some of the recipes that are executed on the local system are also very lightweight
 and can be executed on any laptop or desktop with decent configuration. Sample hardware
 or virtual requirements are listed as follows:
-CPU: 4 cores
-Memory: 8 GB RAM
-Disk space: 80 GB
+
+* CPU: 4 cores
+* Memory: 8 GB RAM
+* Disk space: 80 GB
+
 In this book, you will need the following software list:
-AWS Tools—AWS CLI
-Putty and puttygen
-Internet Browser
-Ansible
-Python 2.7+
-Pip
-EPEL Repo
-Curl / wget
+
+* AWS Tools—AWS CLI
+* Putty and puttygen
+* Internet Browser
+* Ansible
+* Python 2.7+
+* Pip
+* EPEL Repo
+* Curl / wget
 
 ## Related Products
 * [Exploring AWS Instances, Networking, and Databases [Video]](https://www.packtpub.com/virtualization-and-cloud/exploring-aws-instances-networking-and-databases-video?utm_source=github&utm_medium=repository&utm_campaign=9781788291026)
