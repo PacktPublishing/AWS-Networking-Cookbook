@@ -52,5 +52,3 @@ In this book, you will need the following software list:
 
 * [Networking and Security Best Practices on AWS [Video]](https://www.packtpub.com/virtualization-and-cloud/networking-and-security-best-practices-aws-video?utm_source=github&utm_medium=repository&utm_campaign=9781788477826)
 
-### Suggestions and Feedback
-[Click here](https://docs.google.com/forms/d/e/1FAIpQLSe5qwunkGf6PUvzPirPDtuy1Du5Rlzew23UBp2S-P3wB-GcwQ/viewform) if you have any feedback or suggestions.
