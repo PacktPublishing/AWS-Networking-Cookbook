@@ -52,3 +52,7 @@ In this book, you will need the following software list:
 
 * [Networking and Security Best Practices on AWS [Video]](https://www.packtpub.com/virtualization-and-cloud/networking-and-security-best-practices-aws-video?utm_source=github&utm_medium=repository&utm_campaign=9781788477826)
 
+### Download a free PDF
+
+ <i>If you have already purchased a print or Kindle version of this book, you can get a DRM-free PDF version at no cost.<br>Simply click on the link to claim your free PDF.</i>
+<p align="center"> <a href="https://packt.link/free-ebook/9781787123243">https://packt.link/free-ebook/9781787123243 </a> </p>
